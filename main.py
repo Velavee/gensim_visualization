@@ -1,29 +1,22 @@
 # https://www.machinelearningplus.com/nlp/topic-modeling-visualization-how-to-present-results-lda-models/
 import sys
-import re, numpy as np, pandas as pd
+import pandas as pd
 from pprint import pprint
 
 # Gensim
 import gensim, spacy, logging, warnings
 import gensim.corpora as corpora
-from gensim.utils import simple_preprocess
 from gensim.models import CoherenceModel
-import matplotlib.pyplot as plt
 
 # NLTK Stop words
 from nltk.corpus import stopwords
 stop_words = stopwords.words('english')
 
+from preprocess import *
+from visualization import *
+
 warnings.filterwarnings('ignore',category=DeprecationWarning)
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.ERROR)
-
-def sent_to_words(titles):
-    for title in titles:
-        title = re.sub('\S*@\S*\s?', '', title)  # remove emails
-        title = re.sub('\s+', ' ', title)  # remove newline chars
-        title = re.sub("\'", "", title)  # remove single quotes
-        title = gensim.utils.simple_preprocess(str(title), deacc=True) 
-        yield(title)
 
 def format_topics_sentences(ldamodel, corpus, texts):
     sent_topics_df = pd.DataFrame()
@@ -49,7 +42,6 @@ def format_topics_sentences(ldamodel, corpus, texts):
 
 
 df = pd.read_json('testomatTests.json')
-print(df.shape)
 df.head()
 
 data = df.title.values.tolist()
@@ -102,19 +94,7 @@ df_dominant_topic = df_topic_sents_keywords.reset_index()
 df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Text']
 df_dominant_topic.head(10)
 
-doc_lens = [len(d) for d in df_dominant_topic.Text]
+print('\n')
+print(df_dominant_topic)
 
-# Plot
-plt.figure(figsize=(16,7), dpi=160)
-plt.hist(doc_lens, bins=10, color='navy')
-plt.text(40, 200, 'Mean    : ' + str(round(np.mean(doc_lens))))
-plt.text(40, 190, 'Median   : ' + str(round(np.median(doc_lens))))
-plt.text(40, 180, 'Stdev    : ' + str(round(np.std(doc_lens))))
-plt.text(40, 170, '1%ile    : ' + str(round(np.std(doc_lens))))
-plt.text(40, 160, '99%ile   : ' + str(round(np.quantile(doc_lens, q=0.99))))
-
-plt.gca().set(xlim=(0, 10), ylabel='Number of Documents', xlabel='Document Word Count')
-plt.tick_params(size=16)
-plt.xticks(np.linspace(0,50,11))
-plt.title('Distribution of Document Word Counts', fontdict=dict(size=22))
-plt.savefig('word_count.png')
+create_word_distrib(df_dominant_topic)
